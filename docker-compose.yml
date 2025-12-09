@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: student-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: student_management
+      MYSQL_USER: studentapp
+      MYSQL_PASSWORD: studentpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+      interval: 10s
+    networks:
+      - student-network
+
+  student-app:
+    build: .
+    container_name: student-app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/student_management
+      SPRING_DATASOURCE_USERNAME: studentapp
+      SPRING_DATASOURCE_PASSWORD: studentpass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8089:8089"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - student-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+
+networks:
+  student-network:
+    driver: bridge
