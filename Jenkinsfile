@@ -9,7 +9,7 @@ pipeline {
         IMAGE_NAME = 'fekikarim/student-management'
         // SonarQube configuration
         SONARQUBE_SERVER = 'SonarQube'
-        SONAR_PROJECT_KEY = 'fekikarim_student-management_f59122e7-947e-428e-8048-0eedd0e40a77'
+        SONAR_PROJECT_KEY = 'fekikarim_student-management_9e2a077b-3049-4a9a-9c0f-cdd057d5f477'
         SONAR_PROJECT_NAME = 'student-management'
         SONAR_HOST_URL = 'http://192.168.33.10:9000'
     }
