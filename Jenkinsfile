@@ -53,7 +53,7 @@ pipeline {
                     // Give SonarQube time to finalize the task status
                     sleep(time: 5, unit: 'SECONDS')
                 }
-                timeout(time: 60, unit: 'MINUTES') {
+                timeout(time: 10, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
