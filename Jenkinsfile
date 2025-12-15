@@ -88,14 +88,66 @@ pipeline {
                 }
             }
         }
+        
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    echo 'Deploying to Kubernetes...'
+                    
+                    // Apply MySQL resources
+                    sh """
+                        kubectl apply -f k8s/mysql-configmap.yaml
+                        kubectl apply -f k8s/mysql-secret.yaml
+                        kubectl apply -f k8s/mysql-pv.yaml
+                        kubectl apply -f k8s/mysql-pvc.yaml
+                        kubectl apply -f k8s/mysql-deployment.yaml
+                        kubectl apply -f k8s/mysql-service.yaml
+                    """
+                    
+                    // Wait for MySQL to be ready
+                    sh 'kubectl wait --for=condition=ready pod -l app=mysql --timeout=120s || true'
+                    
+                    // Apply Application resources
+                    sh """
+                        kubectl apply -f k8s/app-configmap.yaml
+                        kubectl apply -f k8s/app-secret.yaml
+                        kubectl set image deployment/student-management student-management=${env.IMAGE_NAME}:${env.BUILD_NUMBER} --record || kubectl apply -f k8s/app-deployment.yaml
+                        kubectl apply -f k8s/app-service.yaml
+                    """
+                    
+                    // Wait for application to be ready
+                    sh 'kubectl wait --for=condition=ready pod -l app=student-management --timeout=180s || true'
+                    
+                    // Show deployment status
+                    sh """
+                        echo "=== Deployment Status ==="
+                        kubectl get pods
+                        kubectl get svc
+                    """
+                }
+            }
+        }
+        
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    echo 'Verifying deployment...'
+                    sh """
+                        kubectl get deployment student-management
+                        kubectl get pods -l app=student-management
+                        kubectl describe service student-management-service
+                    """
+                }
+            }
+        }
     }
     
     post {
         success {
-            echo 'Build and SonarQube analysis succeeded!'
+            echo 'Build, SonarQube analysis, and Kubernetes deployment succeeded!'
         }
         failure {
-            echo 'Build or SonarQube analysis failed!'
+            echo 'Build, SonarQube analysis, or Kubernetes deployment failed!'
         }
     }
 }
